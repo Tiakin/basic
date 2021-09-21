@@ -1,0 +1,24 @@
+name: basic
+author: tiakin69
+version: 0.5
+api-version: 1.17
+main: fr.tiakin.main.main
+commands:
+ feed:
+  description: 'pour se nourrir'
+ gm:
+  description: 'Pour change son gamemode'
+ heal:
+  description: 'pour se regen'
+ invsee:
+  description: 'pour voir l inventaire'
+ vanish:
+  description: 'pour se cache'
+ revive:
+  description: 'pour revive quelqu un quand tu fais une connerie'
+ chatclear:
+  description: 'clear le chat'
+ death:
+  description: 'log et autre'
+ enderchest:
+  description: 'pour voir l enderchest'
