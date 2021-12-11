@@ -5,6 +5,7 @@ package fr.tiakin.player;
 import java.awt.Color;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
+import java.util.Set;
 import java.util.TimeZone;
 
 import org.bukkit.Bukkit;
@@ -33,7 +34,9 @@ public class death implements CommandExecutor,Listener{
 	Plugin main;
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String msg, String[] args) {
-
+		SimpleDateFormat timestamp = new SimpleDateFormat("EEEE d MMMM yyyy 'à' HH:mm:ss",new Locale("FR","fr"));
+        timestamp.setTimeZone(TimeZone.getTimeZone("Europe/Paris"));
+        
 		if(sender.isOp()) {
 			if(args.length == 0) {
 				sender.sendMessage("/death log (pseudo)");
@@ -45,12 +48,9 @@ public class death implements CommandExecutor,Listener{
 						sender.sendMessage(ChatColor.of(new Color(20,20,20))+"------- "+ChatColor.of(new Color(50,50,50))+pseudo+ChatColor.of(new Color(20,20,20))+" -------");
 						z = new folder("death", pseudo);
 						for (String date : z.getkey()) {
-							System.out.println(pseudo+" > "+date);
 							
-							SimpleDateFormat timestamp = new SimpleDateFormat("EEEE d MMMM yyyy 'à' HH:mm:ss",new Locale("FR","fr"));
-					        timestamp.setTimeZone(TimeZone.getTimeZone("Europe/Paris"));
 					        TextComponent message = new TextComponent(ChatColor.DARK_GRAY+pseudo+ChatColor.GRAY+" est mort le "+ChatColor.DARK_GRAY+timestamp.format(Long.parseLong(date)*1000));
-					        message.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,new Text("§7Clique pour §6regarder son inventaire §7!")));
+					        message.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,new Text("§7Clique pour §6regarder son inventaire §7!  §4"+date)));
 					        message.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,"/death view "+pseudo+" "+ date));
 					        sender.spigot().sendMessage(message);
 							
@@ -63,10 +63,8 @@ public class death implements CommandExecutor,Listener{
 						sender.sendMessage(ChatColor.of(new Color(20,20,20))+"------- "+ChatColor.of(new Color(50,50,50))+pseudo+ChatColor.of(new Color(20,20,20))+" -------");
 						z = new folder("death", pseudo);
 						for (String date : z.getkey()) {
-							System.out.println(pseudo+" > "+date);
 							
-							SimpleDateFormat timestamp = new SimpleDateFormat("EEEE d MMMM yyyy 'à' HH:mm:ss",new Locale("FR","fr"));
-					        timestamp.setTimeZone(TimeZone.getTimeZone("Europe/Paris"));
+							
 					        TextComponent message = new TextComponent(ChatColor.DARK_GRAY+pseudo+ChatColor.GRAY+" est mort le "+ChatColor.DARK_GRAY+timestamp.format(Long.parseLong(date)*1000));
 					        message.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,new Text("§7Clique pour §6regarder son inventaire §7!")));
 					        message.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,"/death view "+pseudo+" "+ date));
@@ -83,10 +81,9 @@ public class death implements CommandExecutor,Listener{
 					if(args.length == 3) {
 						gettime = args[2];
 					}else {
-						// en gros fais boucle for avec : etc..
-						
-						
-						gettime ="";
+						z = new folder("death", p.getName());
+						Set<String> keys = z.getkey();
+						gettime = keys.toArray()[keys.size()-1].toString();
 					}
 					final String time = gettime;
 					Bukkit.getServer().getScheduler().runTaskAsynchronously(main,new Runnable() {
@@ -149,7 +146,6 @@ public class death implements CommandExecutor,Listener{
 	public death() {
 
 	}
-	//Boolean sync = true;
 	@EventHandler
 	 public void ondeath(PlayerDeathEvent e) {
 		final Player p = e.getEntity();
@@ -162,7 +158,6 @@ public class death implements CommandExecutor,Listener{
 		Bukkit.getServer().getScheduler().runTaskAsynchronously(main,new Runnable() {
             @Override
             public synchronized void run() {
-            	//synchronized(sync) {
         		for(int n = 0; n < 36;) {
         			if(inv[n] != null) {
         				z = new folder("death", p.getName()+"."+time+".slot."+n, IS.serialize(inv[n]));
@@ -197,7 +192,6 @@ public class death implements CommandExecutor,Listener{
         		
         		z = new folder("death", p.getName()+"."+time+".location", p.getLocation().toString());
         		z.addinfolder();
-            	//}
             }
         });
 	}

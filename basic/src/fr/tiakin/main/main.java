@@ -29,7 +29,6 @@ import fr.tiakin.player.life.heal;
 public class main extends JavaPlugin implements Listener{
 	public folder z;
 	public void onEnable(){
-		System.out.println("c lancer");
 		Bukkit.getPluginManager().registerEvents(this, this);
 		Bukkit.getPluginManager().registerEvents(new death(this), this);
 		 getCommand("feed").setExecutor(new feed());
