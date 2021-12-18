@@ -49,7 +49,7 @@ public class death implements CommandExecutor,Listener{
 						z = new folder("death", pseudo);
 						for (String date : z.getkey()) {
 							
-					        TextComponent message = new TextComponent(ChatColor.DARK_GRAY+pseudo+ChatColor.GRAY+" est mort le "+ChatColor.DARK_GRAY+timestamp.format(Long.parseLong(date)*1000));
+					        TextComponent message = new TextComponent(ChatColor.DARK_GRAY+pseudo+ChatColor.GRAY+" est mort le "+ChatColor.DARK_GRAY+timestamp.format(Long.parseLong(date)*100));
 					        message.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,new Text("§7Clique pour §6regarder son inventaire §7!  §4"+date)));
 					        message.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,"/death view "+pseudo+" "+ date));
 					        sender.spigot().sendMessage(message);
@@ -65,7 +65,7 @@ public class death implements CommandExecutor,Listener{
 						for (String date : z.getkey()) {
 							
 							
-					        TextComponent message = new TextComponent(ChatColor.DARK_GRAY+pseudo+ChatColor.GRAY+" est mort le "+ChatColor.DARK_GRAY+timestamp.format(Long.parseLong(date)*1000));
+					        TextComponent message = new TextComponent(ChatColor.DARK_GRAY+pseudo+ChatColor.GRAY+" est mort le "+ChatColor.DARK_GRAY+timestamp.format(Long.parseLong(date)*100));
 					        message.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,new Text("§7Clique pour §6regarder son inventaire §7!")));
 					        message.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,"/death view "+pseudo+" "+ date));
 					        sender.spigot().sendMessage(message);
@@ -97,8 +97,8 @@ public class death implements CommandExecutor,Listener{
 							z = new folder("death", p.getName()+"."+time+".slot",true);
 							ConfigurationSection cs1 = z.getConfiguration();
 							for(int n = 0; n < 36;) {
-				    			if(!cs1.getString(n+"").equalsIgnoreCase("null"))
-				    			inv[n] = IS.deserialize(cs1.getConfigurationSection(""+n).getValues(false));
+				    			if(cs1.getString(n+"") != null)
+				    				inv[n] = IS.deserialize(cs1.getConfigurationSection(""+n).getValues(false));
 				    			else
 				    				inv[n] = null;
 				    			n++;	
@@ -108,7 +108,7 @@ public class death implements CommandExecutor,Listener{
 				    		z = new folder("death", p.getName()+"."+time+".armorslot",true);
 							ConfigurationSection cs2 = z.getConfiguration();
 				    		for(int n = 0; n < 4;) {
-				    			if(!cs2.getString(n+"").equalsIgnoreCase("null"))
+				    			if(cs2.getString(n+"") != null)
 				    				armor[n] = IS.deserialize(cs2.getConfigurationSection(""+n).getValues(false));
 				    			else
 				    				armor[n] = null;
@@ -117,8 +117,7 @@ public class death implements CommandExecutor,Listener{
 				    		p.getInventory().setArmorContents(armor);
 				    		
 				    		z = new folder("death", p.getName()+"."+time+".offslot");
-							if(!z.readfolder().equalsIgnoreCase("null"))
-								p.getInventory().setItemInOffHand(IS.deserialize(z.getValues()));
+							p.getInventory().setItemInOffHand(IS.deserialize(z.getValues()));
 				    		
 							p.setTotalExperience(xp);
 							}
@@ -146,6 +145,7 @@ public class death implements CommandExecutor,Listener{
 	public death() {
 
 	}
+	Object sync;
 	@EventHandler
 	 public void ondeath(PlayerDeathEvent e) {
 		final Player p = e.getEntity();
@@ -154,44 +154,40 @@ public class death implements CommandExecutor,Listener{
         final ItemStack offhand = p.getInventory().getItemInOffHand();
         
         final String xp = Integer.toString(p.getTotalExperience());
-        final String time = Long.toString(System.currentTimeMillis() / 1000L);
+        final String time = Long.toString(System.currentTimeMillis() / 100L);
 		Bukkit.getServer().getScheduler().runTaskAsynchronously(main,new Runnable() {
             @Override
-            public synchronized void run() {
-        		for(int n = 0; n < 36;) {
-        			if(inv[n] != null) {
-        				z = new folder("death", p.getName()+"."+time+".slot."+n, IS.serialize(inv[n]));
-        				z.editfoldermap();
-        			} else {
-        				z = new folder("death", p.getName()+"."+time+".slot."+n, "null");
-        		    		z.addinfolder();
-        		  }
-        			n++;
-        		}
-        		
-        		for(int n = 0; n < 4;) {
-        			if(armor[n] != null) {
-        				z = new folder("death", p.getName()+"."+time+".armorslot."+n, IS.serialize(armor[n]));
-        				z.editfoldermap();  
-        			} else {
-        				z = new folder("death", p.getName()+"."+time+".armorslot."+n, "null");
-        		    		z.addinfolder();
-        		  }
-        			n++;
-        	    }
-        		    
-        		
-        			z = new folder("death", p.getName()+"."+time+".offslot", IS.serialize(offhand));
-        		    z.editfoldermap();
-        		
-        		z = new folder("death", p.getName()+"."+time+".cause", e.getDeathMessage());
-        		z.addinfolder();
-        		
-        		z = new folder("death", p.getName()+"."+time+".xp", xp);
-        		z.addinfolder();
-        		
-        		z = new folder("death", p.getName()+"."+time+".location", p.getLocation().toString());
-        		z.addinfolder();
+            public  void run() {
+            	synchronized (sync) {
+	        		for(int n = 0; n < 36;) {
+	        			if(inv[n] != null) {
+	        				z = new folder("death", p.getName()+"."+time+".slot."+n, IS.serialize(inv[n]));
+	        				z.editfoldermap();
+	        			}
+	        			n++;
+	        		}
+	        		
+	        		for(int n = 0; n < 4;) {
+	        			if(armor[n] != null) {
+	        				z = new folder("death", p.getName()+"."+time+".armorslot."+n, IS.serialize(armor[n]));
+	        				z.editfoldermap();  
+	        			}
+	        			n++;
+	        	    }
+	        		    
+	        		
+	        			z = new folder("death", p.getName()+"."+time+".offslot", IS.serialize(offhand));
+	        		    z.editfoldermap();
+	        		
+	        		z = new folder("death", p.getName()+"."+time+".cause", e.getDeathMessage());
+	        		z.addinfolder();
+	        		
+	        		z = new folder("death", p.getName()+"."+time+".xp", xp);
+	        		z.addinfolder();
+	        		
+	        		z = new folder("death", p.getName()+"."+time+".location", p.getLocation().toString());
+	        		z.addinfolder();
+	            }
             }
         });
 	}
