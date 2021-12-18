@@ -123,7 +123,7 @@ public class death implements CommandExecutor,Listener{
 							}
 			            });
 			}else if(args[0].equalsIgnoreCase("view")) {
-				
+				//go faire un truc
 			}else if(args[0].equalsIgnoreCase("multikill")) {
 				for(String player : args) {
 					if(!player.equalsIgnoreCase("multikill") && Bukkit.getPlayer(player) != null) {
