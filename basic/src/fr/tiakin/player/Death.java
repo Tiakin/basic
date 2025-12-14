@@ -86,6 +86,11 @@ public class Death implements CommandExecutor, Listener {
         }
 
         if(args[0].equalsIgnoreCase("restore")) {
+            if (args.length < 2) {
+                sender.sendMessage(ChatColor.RED + "Usage invalide pour /death restore.");
+                sender.sendMessage(ChatColor.YELLOW + "Correct: /death restore <pseudo> [date]");
+                return true;
+            }
             final Player p = Bukkit.getPlayer(args[1]);
             if (p == null) return false;
 
@@ -116,6 +121,11 @@ public class Death implements CommandExecutor, Listener {
         }
 
         if(args[0].equalsIgnoreCase("view")) {
+            if (args.length < 3) {
+                sender.sendMessage(ChatColor.RED + "Usage invalide pour /death view.");
+                sender.sendMessage(ChatColor.YELLOW + "Correct: /death view <pseudo> <date>");
+                return true;
+            }
             if(!(sender instanceof Player)) return false;
             Player p = (Player) sender;
             String playerName = args[1];
@@ -195,11 +205,14 @@ public class Death implements CommandExecutor, Listener {
                     Bukkit.getPlayer(player).setHealth(0);
                 }
             }
-            Bukkit.broadcastMessage(ChatColor.of(new Color(92, 114, 207)) + "Plusieurs ");
+            Bukkit.broadcastMessage(ChatColor.of(new Color(92, 114, 207)) + "[Multikill] " + ChatColor.RESET + sender.getName() + " a tué " + (args.length - 1) + " joueurs !");
             return true;
         }
 
-        return false;
+        sender.sendMessage(ChatColor.YELLOW + "/death log (pseudo)");
+        sender.sendMessage(ChatColor.YELLOW + "/death restore [pseudo] (date)");
+        sender.sendMessage(ChatColor.YELLOW + "/death view [pseudo] [date]");
+        return true;
     }
 
     @EventHandler
