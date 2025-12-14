@@ -29,10 +29,12 @@ public class DeathStorage {
     private static final String LIST_PLAYERS = "SELECT DISTINCT player_name FROM death_log";
     private static final String LIST_TIMES = "SELECT time FROM death_log WHERE player_name=? ORDER BY time";
     private static final String GET_LOG = "SELECT xp,cause,location,contents,armor,offhand FROM death_log WHERE player_name=? AND time=?";
+    private static final String IDX_PLAYER = "CREATE INDEX IF NOT EXISTS idx_death_player ON death_log(player_name)";
 
     public static void init() {
         try (Statement st = SQLManager.connection().createStatement()) {
             st.executeUpdate(CREATE);
+            st.executeUpdate(IDX_PLAYER);
         } catch (Exception ex) {
             JavaPlugin.getPlugin(main.class).getLogger().severe("Death table init failed: " + ex.getMessage());
         }

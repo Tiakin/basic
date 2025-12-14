@@ -25,6 +25,8 @@ public class ChestLogStorage {
             "item TEXT, " +
             "amount INTEGER" +
             ")";
+        private static final String IDX_CHEST_POS =
+            "CREATE INDEX IF NOT EXISTS idx_chest_pos ON chest_log(chest_world, chest_x, chest_y, chest_z)";
     private static final String INSERT = "INSERT INTO chest_log(time,chest_world,chest_x,chest_y,chest_z,player,action,slot,item,amount) VALUES(?,?,?,?,?,?,?,?,?,?)";
     private static final String COUNT = "SELECT COUNT(*) FROM chest_log WHERE chest_world=? AND chest_x=? AND chest_y=? AND chest_z=?";
     private static final String FETCH = "SELECT time,player,action,slot,item,amount FROM chest_log WHERE chest_world=? AND chest_x=? AND chest_y=? AND chest_z=? ORDER BY time DESC, id DESC LIMIT ? OFFSET ?";
@@ -34,6 +36,7 @@ public class ChestLogStorage {
     public static void init() {
         try (Statement st = SQLManager.connection().createStatement()) {
             st.executeUpdate(CREATE);
+            st.executeUpdate(IDX_CHEST_POS);
         } catch (Exception ex) {
             JavaPlugin.getPlugin(main.class).getLogger().severe("ChestLog table init failed: " + ex.getMessage());
         }
