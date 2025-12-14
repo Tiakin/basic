@@ -207,8 +207,9 @@ public class ChestLog implements CommandExecutor, Listener {
         if (fromItem == null || fromItem.getType().isAir()) return;
         if (toItem == null || toItem.getType().isAir()) return;
 
-        ChestLogStorage.insertAsync(time, ref.world, ref.x, ref.y, ref.z, playerName, "SWITCH_FROM", slot, serialize(fromItem), fromItem.getAmount());
-        ChestLogStorage.insertAsync(time, ref.world, ref.x, ref.y, ref.z, playerName, "SWITCH_TO", slot, serialize(toItem), toItem.getAmount());
+        ItemStack[] items = new ItemStack[] { fromItem.clone(), toItem.clone() };
+        String serialized = serializeArray(items);
+        ChestLogStorage.insertAsync(time, ref.world, ref.x, ref.y, ref.z, playerName, "SWITCH", slot, serialized, -1);
     }
 
     private static class Change {
@@ -250,26 +251,19 @@ public class ChestLog implements CommandExecutor, Listener {
             sender.sendMessage(ChatColor.GOLD + "=== Logs du coffre " + parsed.ref.key() + " (page " + page + "/" + totalPages + ") ===");
 
             List<ChestLogStorage.LogRow> rows = ChestLogStorage.fetch(parsed.ref.world, parsed.ref.x, parsed.ref.y, parsed.ref.z, offset, PAGE_SIZE);
-            for (int i = 0; i < rows.size(); i++) {
-                ChestLogStorage.LogRow row = rows.get(i);
+            for (ChestLogStorage.LogRow row : rows) {
                 ChatColor color = colorForAction(row.action);
                 String label = labelForAction(row.action, row.slot);
                 String itemName;
 
-                if ("SWITCH_FROM".equals(row.action) && i + 1 < rows.size()) {
-                    ChestLogStorage.LogRow next = rows.get(i + 1);
-                    if ("SWITCH_TO".equals(next.action) && next.slot == row.slot && next.player.equals(row.player) && next.time == row.time) {
-                        ItemStack fromItem = deserialize(row.itemData);
-                        ItemStack toItem = deserialize(next.itemData);
-                        String fromName = fromItem != null ? fromItem.getType() + " x" + row.amount : "Unknown";
-                        String toName = toItem != null ? toItem.getType() + " x" + next.amount : "Unknown";
+                if ("SWITCH".equals(row.action)) {
+                    ItemStack[] items = deserializeArray(row.itemData);
+                    if (items != null && items.length == 2) {
+                        String fromName = items[0] != null ? items[0].getType() + " x" + items[0].getAmount() : "Unknown";
+                        String toName = items[1] != null ? items[1].getType() + " x" + items[1].getAmount() : "Unknown";
                         itemName = fromName + " -> " + toName;
-                        label = "SWITCH slot " + row.slot;
-                        // consume next
-                        i++;
                     } else {
-                        ItemStack item = deserialize(row.itemData);
-                        itemName = (item != null ? item.getType() + " x" + row.amount : "Unknown");
+                        itemName = "Unknown";
                     }
                 } else {
                     ItemStack item = deserialize(row.itemData);
@@ -378,7 +372,7 @@ public class ChestLog implements CommandExecutor, Listener {
     private ChatColor colorForAction(String action) {
         if (action == null) return ChatColor.GRAY;
         if (action.startsWith("MOVE")) return ChatColor.AQUA;
-        if (action.startsWith("SWITCH")) return ChatColor.YELLOW;
+        if (action.equals("SWITCH")) return ChatColor.YELLOW;
         if (action.equalsIgnoreCase("DEPOT")) return ChatColor.GREEN;
         if (action.equalsIgnoreCase("RETRAIT")) return ChatColor.RED;
         return ChatColor.GRAY;
@@ -389,8 +383,7 @@ public class ChestLog implements CommandExecutor, Listener {
         if (action.startsWith("MOVE->")) {
             return "MOVE " + slot + " -> " + action.substring("MOVE->".length());
         }
-        if (action.equals("SWITCH_FROM")) return "SWITCH FROM slot " + slot;
-        if (action.equals("SWITCH_TO")) return "SWITCH TO slot " + slot;
+        if (action.equals("SWITCH")) return "SWITCH slot " + slot;
         return action + " slot " + slot;
     }
 
@@ -403,6 +396,22 @@ public class ChestLog implements CommandExecutor, Listener {
         Map<String, Object> map = SQLManager.stringToMap(data);
         if (map == null || map.isEmpty()) return null;
         return IS.deserialize(map);
+    }
+
+    private String serializeArray(ItemStack[] items) {
+        try {
+            return SQLManager.serializeArray(items);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private ItemStack[] deserializeArray(String data) {
+        try {
+            return SQLManager.deserializeArray(data);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     static class ChestRef {
