@@ -1,7 +1,5 @@
 package fr.tiakin.main;
 
-import java.util.Map;
-
 import org.bukkit.Bukkit;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
@@ -39,10 +37,11 @@ public class main extends JavaPlugin implements Listener {
         Bukkit.getPluginManager().registerEvents(this, this);
         
         if(deathModuleEnabled) {
-            Bukkit.getPluginManager().registerEvents(new Death(), this);
-            getCommand("death").setExecutor(new Death());
+            Death death = new Death();
+            Bukkit.getPluginManager().registerEvents(death, this);
+            getCommand("death").setExecutor(death);
             getCommand("revive").setExecutor(new Revive());
-            Folder.create("death");
+            Death.initTable();
             getLogger().info("Module Death activé");
         } else {
             getLogger().info("Module Death désactivé");
@@ -61,23 +60,21 @@ public class main extends JavaPlugin implements Listener {
             ChestLog chestLog = new ChestLog();
             Bukkit.getPluginManager().registerEvents(chestLog, this);
             getCommand(ChestLog.CHESTLOG_FILE).setExecutor(chestLog);
-            Folder.create(ChestLog.CHESTLOG_FILE);
+            ChestLog.initTable();
             getLogger().info("Module ChestLog activé");
         } else {
             getLogger().info("Module ChestLog désactivé");
         }
         
-        Folder.create("vanish");
+        Vanish.initTable();
     }
 
     @EventHandler
     public void join(PlayerJoinEvent e) {
-        Map<String, Object> all = Folder.getValues("vanish");
-        if(all != null) {
-            for(Map.Entry<String, Object> entry : all.entrySet()) {
-                if(entry.getValue().toString().equalsIgnoreCase("true")) {
-                    e.getPlayer().hidePlayer(this, Bukkit.getPlayer(entry.getKey()));
-                }
+        for (java.util.UUID uuid : Vanish.activeVanished()) {
+            Player vanished = Bukkit.getPlayer(uuid);
+            if (vanished != null) {
+                e.getPlayer().hidePlayer(this, vanished);
             }
         }
     }
@@ -85,10 +82,8 @@ public class main extends JavaPlugin implements Listener {
     @EventHandler
     public void leave(PlayerQuitEvent e) {
         Player p = e.getPlayer();
-        String status = Folder.get("vanish", p.getName());
-        if(status == null) return;
-        if(status.equalsIgnoreCase("true")) {
-            Folder.set("vanish", p.getName(), "false");
+        if(Vanish.isVanished(p.getUniqueId())) {
+            Vanish.setVanished(p.getUniqueId(), p.getName(), false);
             p.setCanPickupItems(true);
             e.setQuitMessage(null);
         }
