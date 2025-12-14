@@ -20,7 +20,7 @@ commands:
   description: 'clear le chat'
  death:
   description: 'log et autre'
- enderchest:
+ endersee:
   description: 'pour voir l enderchest'
  chestlog:
   description: 'pour voir les logs des coffres'
