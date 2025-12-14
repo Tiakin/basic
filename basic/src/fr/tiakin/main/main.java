@@ -115,10 +115,143 @@ public class main extends JavaPlugin implements Listener {
     }
     
     public static Class<?> getNMSClass(String nmsClassString) throws ClassNotFoundException {
-        String version = Bukkit.getServer().getClass().getPackage().getName().replace(".", ",").split(",")[3] + ".";
-        String name = "net.minecraft.server." + version + nmsClassString;
+        String cbPackage = Bukkit.getServer().getClass().getPackage().getName();
+        String version = "";
+        if (cbPackage.startsWith("org.bukkit.craftbukkit")) {
+            int lastDot = cbPackage.lastIndexOf('.');
+            String tail = cbPackage.substring(lastDot + 1);
+            if (!"craftbukkit".equals(tail)) {
+                version = tail + ".";
+            }
+        }
+        String name = "org.bukkit.craftbukkit." + version + nmsClassString;
         return Class.forName(name);
     }
+    
+    public static Object readNBTFromFile(java.io.File file) throws Exception {
+        try {
+            // Pre-1.21
+            Class<?> nbtToolsClass = Class.forName("net.minecraft.nbt.NBTCompressedStreamTools");
+            java.lang.reflect.Method readMethod = nbtToolsClass.getMethod("a", java.io.InputStream.class);
+            return readMethod.invoke(null, new java.io.FileInputStream(file));
+        } catch (ClassNotFoundException | NoSuchMethodException e) {
+            // 1.21+
+            try {
+                Class<?> nbtIoClass = Class.forName("net.minecraft.nbt.NbtIo");
+                Class<?> nbtAccounterClass = Class.forName("net.minecraft.nbt.NbtAccounter");
+                java.lang.reflect.Method unlimitedHeapMethod = nbtAccounterClass.getMethod("unlimitedHeap");
+                Object accounter = unlimitedHeapMethod.invoke(null);
+                
+                java.lang.reflect.Method readMethod = nbtIoClass.getMethod("readCompressed", java.io.InputStream.class, nbtAccounterClass);
+                return readMethod.invoke(null, new java.io.FileInputStream(file), accounter);
+            } catch (Exception ex) {
+                throw new Exception("Impossible de lire le fichier NBT - API non trouvée", ex);
+            }
+        }
+    }
+    
+    public static Object getList(Object nbtTag, String key, int type) throws Exception {
+        // Pre-1.21
+        try {
+            java.lang.reflect.Method method = nbtTag.getClass().getMethod("getList", String.class, int.class);
+            return method.invoke(nbtTag, key, type);
+        } catch (NoSuchMethodException ignored) {
+            // 1.21+
+            try {
+                java.lang.reflect.Method method = nbtTag.getClass().getMethod("getList", String.class);
+                Object result = method.invoke(nbtTag, key);
+                // 1.21+ probablement Optional
+                if (result instanceof java.util.Optional) {
+                    return ((java.util.Optional<?>) result).orElse(null);
+                }
+                return result;
+            } catch (NoSuchMethodException ignored2) {
+                // Fallback: use generic get(String) and expect a ListTag
+                Object list = get(nbtTag, key);
+                if (list == null) {
+                    throw new Exception("NBT list '" + key + "' introuvable");
+                }
+                return list;
+            }
+        }
+    }
+    
+    public static Object get(Object nbtTag, String key) throws Exception {
+        java.lang.reflect.Method method = nbtTag.getClass().getMethod("get", String.class);
+        Object result = method.invoke(nbtTag, key);
+        // 1.21+ probablement Optional
+        if (result instanceof java.util.Optional) {
+            return ((java.util.Optional<?>) result).orElse(null);
+        }
+        return result;
+    }
+    
+    public static int getInt(Object nbtTag, String key) throws Exception {
+        java.lang.reflect.Method method = nbtTag.getClass().getMethod("getInt", String.class);
+        Object result = method.invoke(nbtTag, key);
+        // 1.21+ probablement Optional
+        if (result instanceof java.util.Optional) {
+            return ((java.util.Optional<Integer>) result).orElse(0);
+        }
+        return (int) result;
+    }
+    
+    public static boolean isEmpty(Object nbtTag) throws Exception {
+        java.lang.reflect.Method method = nbtTag.getClass().getMethod("isEmpty");
+        return (boolean) method.invoke(nbtTag);
+    }
+    
+    public static int size(Object listTag) throws Exception {
+        // 1.21+ probablement Optional
+        if (listTag instanceof java.util.Optional) {
+            listTag = ((java.util.Optional<?>) listTag).orElse(null);
+            if (listTag == null) return 0;
+        }
+        java.lang.reflect.Method method = listTag.getClass().getMethod("size");
+        return (int) method.invoke(listTag);
+    }
+    
+    public static Object get(Object listTag, int index) throws Exception {
+        java.lang.reflect.Method method = listTag.getClass().getMethod("get", int.class);
+        Object result = method.invoke(listTag, index);
+        // 1.21+ probablement Optional
+        if (result instanceof java.util.Optional) {
+            return ((java.util.Optional<?>) result).orElse(null);
+        }
+        return result;
+    }
+    
+        public static Object nbtToItemStack(Object nbtTag) throws Exception {
+            try {
+                // Pré-1.21 : ItemStack.a(NBTTagCompound)
+                Class<?> itemStackClass = Class.forName("net.minecraft.world.item.ItemStack");
+                java.lang.reflect.Method legacy = itemStackClass.getMethod("a", nbtTag.getClass());
+                return legacy.invoke(null, nbtTag);
+            } catch (NoSuchMethodException e) {
+                // 1.21+ : parse via Codec et NbtOps
+                try {
+                    Class<?> itemStackClass = Class.forName("net.minecraft.world.item.ItemStack");
+                    Class<?> nbtOpsClass = Class.forName("net.minecraft.nbt.NbtOps");
+                    java.lang.reflect.Field codecField = itemStackClass.getField("CODEC");
+                    Object codec = codecField.get(null);
+                    java.lang.reflect.Field opsInstanceField = nbtOpsClass.getField("INSTANCE");
+                    Object nbtOps = opsInstanceField.get(null);
+
+                    Class<?> dynamicOpsClass = Class.forName("com.mojang.serialization.DynamicOps");
+                    java.lang.reflect.Method parse = codec.getClass().getMethod("parse", dynamicOpsClass, Object.class);
+                    Object dataResult = parse.invoke(codec, nbtOps, nbtTag);
+                    java.lang.reflect.Method resultMethod = dataResult.getClass().getMethod("result");
+                    java.util.Optional<?> opt = (java.util.Optional<?>) resultMethod.invoke(dataResult);
+                    if (opt.isPresent()) {
+                        return opt.get();
+                    }
+                    java.lang.reflect.Field emptyField = itemStackClass.getField("EMPTY");
+                    return emptyField.get(null);
+                } catch (Exception ex) {
+                    throw new Exception("Impossible de convertir NBT en ItemStack - API non trouvée", ex);
+                }
+            }
+        }
     
     public boolean isDeathModuleEnabled() {
         return deathModuleEnabled;

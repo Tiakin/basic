@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -317,7 +318,7 @@ public class ChestLog implements CommandExecutor, Listener {
                 } else if(sender instanceof Player) {
                     worldName = ((Player)sender).getWorld().getName();
                 } else {
-                    worldName = "world";
+                    worldName = Bukkit.getWorlds().get(0).getWorldFolder().getName();
                 }
                 chestKey = sanitize(worldName) + "_" + x + "_" + y + "_" + z;
             } else if(args.length >= 1) {

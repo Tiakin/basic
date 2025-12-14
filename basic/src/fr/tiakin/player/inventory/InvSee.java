@@ -18,9 +18,6 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 import fr.tiakin.main.main;
-import net.minecraft.nbt.NBTCompressedStreamTools;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
 
 public class InvSee implements CommandExecutor {
 
@@ -36,16 +33,18 @@ public class InvSee implements CommandExecutor {
 				try {
 					for(OfflinePlayer offplayer : Bukkit.getOfflinePlayers()) {
 						if(offplayer.getName().equalsIgnoreCase(args[0])) {
-							File player = new File("world/playerdata/"+offplayer.getUniqueId()+".dat");
-							  NBTTagCompound nbt = NBTCompressedStreamTools.a((InputStream) (new FileInputStream(player)));
-							  NBTTagList inventory = (NBTTagList) nbt.get("Inventory");
+						File worldFolder = Bukkit.getWorlds().get(0).getWorldFolder();
+						File player = new File(worldFolder, "playerdata" + File.separator + offplayer.getUniqueId() + ".dat");
+							  Object nbt = main.readNBTFromFile(player);
+							  Object inventory = main.get(nbt, "Inventory");
 							  Inventory inv = Bukkit.createInventory(null, 45, offplayer.getName());
-							  for (int i = 0; i < inventory.size(); i++) {
-							    NBTTagCompound compound = (NBTTagCompound) inventory.get(i);
-							    if (!compound.isEmpty()) {
+							  for (int i = 0; i < main.size(inventory); i++) {
+							    Object compound = main.get(inventory, i);
+							    if (!main.isEmpty(compound)) {
 							      Method m = main.getNMSClass("inventory.CraftItemStack").getMethod("asBukkitCopy",net.minecraft.world.item.ItemStack.class);
-							      ItemStack stack = (ItemStack) m.invoke(net.minecraft.world.item.ItemStack.a(compound));
-							      Integer slot = compound.getInt("Slot");
+							      Object nmsItemStack = main.nbtToItemStack(compound);
+							      ItemStack stack = (ItemStack) m.invoke(null, nmsItemStack);
+							      Integer slot = main.getInt(compound, "Slot");
 							      if(slot == 100) {
 							    	  slot = 36; 
 							      }else if(slot == 101) {
@@ -63,9 +62,9 @@ public class InvSee implements CommandExecutor {
 							  Bukkit.getPlayer(sender.getName()).openInventory(inv);
 							} 
 					}
-				} catch (IOException | NoSuchMethodException | SecurityException | ClassNotFoundException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+				} catch (Exception e) {
 					  e.printStackTrace();
-					}
+					} 
 			}
 		}
 		

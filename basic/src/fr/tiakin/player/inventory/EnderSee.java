@@ -16,11 +16,9 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import fr.tiakin.main.main;
-import net.minecraft.nbt.NBTCompressedStreamTools;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
 
 public class EnderSee implements CommandExecutor {
 
@@ -36,23 +34,25 @@ public class EnderSee implements CommandExecutor {
 				try {
 					for(OfflinePlayer offplayer : Bukkit.getOfflinePlayers()) {
 						if(offplayer.getName().equalsIgnoreCase(args[0])) {
-							File player = new File("world/playerdata/"+offplayer.getUniqueId()+".dat");
-							NBTTagCompound nbt = NBTCompressedStreamTools.a(new FileInputStream(player));
-							NBTTagList inventory = nbt.getList("EnderItems",10);
+							File worldFolder = Bukkit.getWorlds().get(0).getWorldFolder();
+							File player = new File(worldFolder, "playerdata" + File.separator + offplayer.getUniqueId() + ".dat");
+							Object nbt = main.readNBTFromFile(player);
+							Object inventory = main.getList(nbt, "EnderItems", 10);
 							Inventory inv = Bukkit.createInventory(null, 27, offplayer.getName());
-							for (int i = 0; i < inventory.size(); i++) {
-							    NBTTagCompound compound = (NBTTagCompound) inventory.get(i);
-							    if (!compound.isEmpty()) {
+							for (int i = 0; i < main.size(inventory); i++) {
+							    Object compound = main.get(inventory, i);
+							    if (!main.isEmpty(compound)) {
 							    	Method m = main.getNMSClass("inventory.CraftItemStack").getMethod("asBukkitCopy",net.minecraft.world.item.ItemStack.class);
-							    	ItemStack stack = (ItemStack) m.invoke(net.minecraft.world.item.ItemStack.a(compound));
-							    	Integer slot = compound.getInt("Slot");
+							    	Object nmsItemStack = main.nbtToItemStack(compound);
+							    	ItemStack stack = (ItemStack) m.invoke(null, nmsItemStack);
+							    	Integer slot = main.getInt(compound, "Slot");
 							    	inv.setItem(slot, stack);
 							    }
 							  }
 							  Bukkit.getPlayer(sender.getName()).openInventory(inv);
 							}
 					}
-				} catch (IOException | NoSuchMethodException | SecurityException | ClassNotFoundException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+				} catch (Exception e) {
 					  e.printStackTrace();
 				}
 			}
