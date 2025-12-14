@@ -1,0 +1,6 @@
+modules:
+  death:
+    enabled: false # Active le système de sauvegarde des inventaires à la mort et le revive avec restauration de l'inventaire
+  
+  chestlog:
+    enabled: true # Active le système de logs des coffres

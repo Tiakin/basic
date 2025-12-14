@@ -37,8 +37,8 @@ public class enderchest implements CommandExecutor {
 					for(OfflinePlayer offplayer : Bukkit.getOfflinePlayers()) {
 						if(offplayer.getName().equalsIgnoreCase(args[0])) {
 							File player = new File("world/playerdata/"+offplayer.getUniqueId()+".dat");
-							NBTTagCompound nbt = NBTCompressedStreamTools.a((InputStream) (new FileInputStream(player)));
-							NBTTagList inventory = (NBTTagList) nbt.getList("EnderItems",10);
+							NBTTagCompound nbt = NBTCompressedStreamTools.a(new FileInputStream(player));
+							NBTTagList inventory = nbt.getList("EnderItems",10);
 							Inventory inv = Bukkit.createInventory(null, 27, offplayer.getName());
 							for (int i = 0; i < inventory.size(); i++) {
 							    NBTTagCompound compound = (NBTTagCompound) inventory.get(i);

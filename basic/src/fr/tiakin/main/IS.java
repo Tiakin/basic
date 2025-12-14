@@ -11,8 +11,7 @@ public class IS {
 	 }
 	 
 	 public static ItemStack deserialize(Map<String, Object> serializedItem){
-		 ItemStack item = ItemStack.deserialize(serializedItem);
-		 return item;
+		 return ItemStack.deserialize(serializedItem);
 	 }
 	 
 }

@@ -1,6 +1,5 @@
 package fr.tiakin.main;
 
-import java.io.File;
 import java.util.Map;
 
 import org.bukkit.Bukkit;
@@ -16,100 +15,116 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import fr.tiakin.chat.chatclear;
-import fr.tiakin.player.death;
-import fr.tiakin.player.gm;
-import fr.tiakin.player.revive;
-import fr.tiakin.player.vanish;
+import fr.tiakin.chat.ChatClear;
+import fr.tiakin.player.Death;
+import fr.tiakin.player.Gm;
+import fr.tiakin.player.Revive;
+import fr.tiakin.player.Vanish;
 import fr.tiakin.player.inventory.enderchest;
 import fr.tiakin.player.inventory.invsee;
-import fr.tiakin.player.life.feed;
-import fr.tiakin.player.life.heal;
+import fr.tiakin.player.life.Feed;
+import fr.tiakin.player.life.Heal;
+import fr.tiakin.chest.ChestLog;
 
 
-public class main extends JavaPlugin implements Listener{
-	public folder z;
-	public void onEnable(){
-		Bukkit.getPluginManager().registerEvents(this, this);
-		Bukkit.getPluginManager().registerEvents(new death(this), this);
-		 getCommand("feed").setExecutor(new feed());
-		 getCommand("heal").setExecutor(new heal());
-		 getCommand("gm").setExecutor(new gm());
-		 getCommand("vanish").setExecutor(new vanish(this));
-		 getCommand("invsee").setExecutor(new invsee());
-		 getCommand("revive").setExecutor(new revive());
-		 getCommand("chatclear").setExecutor(new chatclear());
-		 getCommand("death").setExecutor(new death(this));
-		 getCommand("enderchest").setExecutor(new enderchest());
-		 
-		 File vanishfile = new File("plugins/storage/vanish.yml");
-	        if (!vanishfile.exists()){
-	        	z = new folder("vanish", null);
-	        	z.setfolder();
-	        }
-	     File deathfile = new File("plugins/storage/death.yml");
-	        if (!deathfile.exists()){
-	        	z = new folder("death", null);
-	        	z.setfolder();
-	        }
-	}
-
-	@EventHandler
-	 public void join(PlayerJoinEvent e) {
-		
-		z = new folder("vanish");
-		Map<String, Object> all = z.getValues();
-		 for(String pseudo : all.keySet()) {
-			 System.out.println(all.get(pseudo));
-			 if(all.get(pseudo).toString().equalsIgnoreCase("true")) {
-				 e.getPlayer().hidePlayer(this, Bukkit.getPlayer(pseudo));
-			 }
-		 }
-	}
-
-	
-	@EventHandler
-	 public void leave(PlayerQuitEvent e) {
-		Player p = e.getPlayer();
-		z = new folder("vanish", p.getName(),"false");
-		if(z.readfolder() == null) {
-			
-		}else if(z.readfolder().equalsIgnoreCase("true")) {
-			z.editfolder();
-			p.setCanPickupItems(true);
-			
-			e.setQuitMessage(null);
-		}
-	}
-	
-	@EventHandler
-    public static void chat(AsyncPlayerChatEvent e){
-    	if(e.getPlayer().isOp())
-    		if(e.getMessage().contains(".&"))
-    			e.setMessage(e.getMessage().replace(".&", "�"));
+public class main extends JavaPlugin implements Listener {
+    
+    private boolean deathModuleEnabled = getConfig().getBoolean("modules.death.enabled", false);
+    private boolean chestlogModuleEnabled = getConfig().getBoolean("modules.chestlog.enabled", true);
+    
+    @Override
+    public void onEnable() {
+        saveDefaultConfig();
+        
+        Bukkit.getPluginManager().registerEvents(this, this);
+        
+        if(deathModuleEnabled) {
+            Bukkit.getPluginManager().registerEvents(new Death(), this);
+            getCommand("death").setExecutor(new Death());
+            getCommand("revive").setExecutor(new Revive());
+            Folder.create("death");
+            getLogger().info("Module Death activé");
+        } else {
+            getLogger().info("Module Death désactivé");
+        }
+        
+        getCommand("feed").setExecutor(new Feed());
+        getCommand("heal").setExecutor(new Heal());
+        getCommand("gm").setExecutor(new Gm());
+        getCommand("vanish").setExecutor(new Vanish());
+        getCommand("invsee").setExecutor(new invsee());
+        getCommand("chatclear").setExecutor(new ChatClear());
+        getCommand("endersee").setExecutor(new enderchest());
+        
+        // Module ChestLog
+        if(chestlogModuleEnabled) {
+            ChestLog chestLog = new ChestLog();
+            Bukkit.getPluginManager().registerEvents(chestLog, this);
+            getCommand(ChestLog.CHESTLOG_FILE).setExecutor(chestLog);
+            Folder.create(ChestLog.CHESTLOG_FILE);
+            getLogger().info("Module ChestLog activé");
+        } else {
+            getLogger().info("Module ChestLog désactivé");
+        }
+        
+        Folder.create("vanish");
     }
-	
+
+    @EventHandler
+    public void join(PlayerJoinEvent e) {
+        Map<String, Object> all = Folder.getValues("vanish");
+        if(all != null) {
+            for(Map.Entry<String, Object> entry : all.entrySet()) {
+                if(entry.getValue().toString().equalsIgnoreCase("true")) {
+                    e.getPlayer().hidePlayer(this, Bukkit.getPlayer(entry.getKey()));
+                }
+            }
+        }
+    }
+
+    @EventHandler
+    public void leave(PlayerQuitEvent e) {
+        Player p = e.getPlayer();
+        String status = Folder.get("vanish", p.getName());
+        if(status == null) return;
+        if(status.equalsIgnoreCase("true")) {
+            Folder.set("vanish", p.getName(), "false");
+            p.setCanPickupItems(true);
+            e.setQuitMessage(null);
+        }
+    }
+    
+    @EventHandler
+    public static void chat(AsyncPlayerChatEvent e) {
+        if(e.getPlayer().isOp() && e.getMessage().contains(".&"))
+            e.setMessage(e.getMessage().replace(".&", "§"));
+    }
+    
     @EventHandler
     public void redstoneChanges(BlockRedstoneEvent e) {
         Block block = e.getBlock();
         BlockState state = block.getState();
         
         if(state instanceof CommandBlock) {
-        	CommandBlock cb = (CommandBlock)state;
-        	if(cb.getCommand().contains("/&")) {
-        		cb.setCommand(cb.getCommand().replace("/&", "�"));
-        		cb.update();
-        		
-        	}
+            CommandBlock cb = (CommandBlock) state;
+            if(cb.getCommand().contains("/&")) {
+                cb.setCommand(cb.getCommand().replace("/&", "§"));
+                cb.update();
+            }
         }
     }
     
     public static Class<?> getNMSClass(String nmsClassString) throws ClassNotFoundException {
         String version = Bukkit.getServer().getClass().getPackage().getName().replace(".", ",").split(",")[3] + ".";
         String name = "net.minecraft.server." + version + nmsClassString;
-        Class<?> nmsClass = Class.forName(name);
-        
-        return nmsClass;
+        return Class.forName(name);
     }
     
+    public boolean isDeathModuleEnabled() {
+        return deathModuleEnabled;
+    }
+    
+    public boolean isChestlogModuleEnabled() {
+        return chestlogModuleEnabled;
+    }
 }

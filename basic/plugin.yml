@@ -22,3 +22,5 @@ commands:
   description: 'log et autre'
  enderchest:
   description: 'pour voir l enderchest'
+ chestlog:
+  description: 'pour voir les logs des coffres'
