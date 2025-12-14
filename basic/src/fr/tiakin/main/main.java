@@ -20,8 +20,8 @@ import fr.tiakin.player.Death;
 import fr.tiakin.player.Gm;
 import fr.tiakin.player.Revive;
 import fr.tiakin.player.Vanish;
-import fr.tiakin.player.inventory.enderchest;
-import fr.tiakin.player.inventory.invsee;
+import fr.tiakin.player.inventory.EnderSee;
+import fr.tiakin.player.inventory.InvSee;
 import fr.tiakin.player.life.Feed;
 import fr.tiakin.player.life.Heal;
 import fr.tiakin.chest.ChestLog;
@@ -52,9 +52,9 @@ public class main extends JavaPlugin implements Listener {
         getCommand("heal").setExecutor(new Heal());
         getCommand("gm").setExecutor(new Gm());
         getCommand("vanish").setExecutor(new Vanish());
-        getCommand("invsee").setExecutor(new invsee());
+        getCommand("invsee").setExecutor(new InvSee());
         getCommand("chatclear").setExecutor(new ChatClear());
-        getCommand("endersee").setExecutor(new enderchest());
+        getCommand("endersee").setExecutor(new EnderSee());
         
         // Module ChestLog
         if(chestlogModuleEnabled) {
