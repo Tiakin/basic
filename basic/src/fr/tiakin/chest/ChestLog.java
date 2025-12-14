@@ -104,10 +104,15 @@ public class ChestLog implements CommandExecutor, Listener {
             return null;
         }
         
-        return loc.getWorld().getName() + "_" + 
+        return sanitize(loc.getWorld().getName()) + "_" + 
                loc.getBlockX() + "_" + 
                loc.getBlockY() + "_" + 
                loc.getBlockZ();
+    }
+
+    private String sanitize(String input) {
+        if (input == null) return "";
+        return input.replace(' ', '_').replace('.', '_');
     }
     
     private void logChanges(Player player, String chestKey, ItemStack[] before, ItemStack[] after) {
@@ -166,13 +171,19 @@ public class ChestLog implements CommandExecutor, Listener {
             if(args.length >= 4) {
                 String world;
                 if(args.length >= 5) {
-                    world = args[4];
+                    // Recompose le nom du monde qui peut contenir des espaces
+                    StringBuilder sb = new StringBuilder();
+                    for (int i = 4; i < args.length; i++) {
+                        if (i > 4) sb.append(' ');
+                        sb.append(args[i]);
+                    }
+                    world = sb.toString();
                 } else if(sender instanceof Player) {
                     world = ((Player)sender).getWorld().getName();
                 } else {
                     world = "world";
                 }
-                chestKey = world + "_" + args[1] + "_" + args[2] + "_" + args[3];
+                chestKey = sanitize(world) + "_" + args[1] + "_" + args[2] + "_" + args[3];
             } else if(args.length == 1) {
                 if(!(sender instanceof Player)) {
                     sender.sendMessage(ChatColor.RED + "Vous devez spécifier les coordonnées depuis la console.");
@@ -188,7 +199,7 @@ public class ChestLog implements CommandExecutor, Listener {
                 }
                 
                 Location loc = targetBlock.getLocation();
-                chestKey = loc.getWorld().getName() + "_" + 
+                chestKey = sanitize(loc.getWorld().getName()) + "_" + 
                           loc.getBlockX() + "_" + 
                           loc.getBlockY() + "_" + 
                           loc.getBlockZ();
@@ -230,13 +241,19 @@ public class ChestLog implements CommandExecutor, Listener {
             if(args.length >= 4) {
                 String world;
                 if(args.length >= 5) {
-                    world = args[4];
+                    // Recompose le nom du monde qui peut contenir des espaces
+                    StringBuilder sb = new StringBuilder();
+                    for (int i = 4; i < args.length; i++) {
+                        if (i > 4) sb.append(' ');
+                        sb.append(args[i]);
+                    }
+                    world = sb.toString();
                 } else if(sender instanceof Player) {
                     world = ((Player)sender).getWorld().getName();
                 } else {
                     world = "world";
                 }
-                chestKey = world + "_" + args[1] + "_" + args[2] + "_" + args[3];
+                chestKey = sanitize(world) + "_" + args[1] + "_" + args[2] + "_" + args[3];
             } else if(args.length == 1) {
                 if(!(sender instanceof Player)) {
                     sender.sendMessage(ChatColor.RED + "Vous devez spécifier les coordonnées depuis la console.");
@@ -252,7 +269,7 @@ public class ChestLog implements CommandExecutor, Listener {
                 }
                 
                 Location loc = targetBlock.getLocation();
-                chestKey = loc.getWorld().getName() + "_" + 
+                chestKey = sanitize(loc.getWorld().getName()) + "_" + 
                           loc.getBlockX() + "_" + 
                           loc.getBlockY() + "_" + 
                           loc.getBlockZ();
