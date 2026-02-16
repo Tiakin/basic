@@ -12,6 +12,8 @@ commands:
   description: 'pour se regen'
  invsee:
   description: 'pour voir l inventaire'
+ nick:
+  description: 'pour changer le pseudo et le skin'
  vanish:
   description: 'pour se cache'
  revive:

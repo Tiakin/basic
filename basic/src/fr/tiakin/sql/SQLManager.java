@@ -25,7 +25,6 @@ public class SQLManager {
 
     private SQLManager() {}
 
-    // -------- SQLite bootstrap ---------
     private static synchronized void ensureInit() {
         if (conn != null) return;
         try {
@@ -39,13 +38,11 @@ public class SQLManager {
         }
     }
 
-    // -------- Public API ---------
     public static Connection connection() {
         ensureInit();
         return conn;
     }
 
-    // -------- Helper (YAML string serialization) ---------
     public static String mapToString(Map<String, Object> data) {
         if (data == null) return null;
         YamlConfiguration yml = new YamlConfiguration();
@@ -53,7 +50,6 @@ public class SQLManager {
         return yml.saveToString();
     }
 
-    // -------- Binary serialization (for ItemStack arrays) ---------
     public static String serializeArray(ItemStack[] items) {
         if (items == null) return null;
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -81,7 +77,6 @@ public class SQLManager {
         }
     }
 
-    @SuppressWarnings("unchecked")
     public static Map<String, Object> stringToMap(String data) {
         if (data == null) return Collections.emptyMap();
         YamlConfiguration yml = new YamlConfiguration();

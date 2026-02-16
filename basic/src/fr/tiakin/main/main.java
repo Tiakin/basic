@@ -16,6 +16,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import fr.tiakin.chat.ChatClear;
 import fr.tiakin.player.Death;
 import fr.tiakin.player.Gm;
+import fr.tiakin.player.Nick;
 import fr.tiakin.player.Revive;
 import fr.tiakin.player.Vanish;
 import fr.tiakin.player.inventory.EnderSee;
@@ -52,6 +53,7 @@ public class main extends JavaPlugin implements Listener {
         getCommand("gm").setExecutor(new Gm());
         getCommand("vanish").setExecutor(new Vanish());
         getCommand("invsee").setExecutor(new InvSee());
+        getCommand("nick").setExecutor(new Nick(this));
         getCommand("chatclear").setExecutor(new ChatClear());
         getCommand("endersee").setExecutor(new EnderSee());
         

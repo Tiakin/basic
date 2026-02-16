@@ -250,7 +250,6 @@ public class Death implements CommandExecutor, Listener {
         }
     }
 
-    // ---- serialization helpers ----
     private static String serializeArray(ItemStack[] items) {
         return SQLManager.serializeArray(items);
     }

@@ -410,7 +410,7 @@ public class ChestLog implements CommandExecutor, Listener {
         try {
             return SQLManager.deserializeArray(data);
         } catch (Exception e) {
-            return null;
+            return new ItemStack[0];
         }
     }
 
